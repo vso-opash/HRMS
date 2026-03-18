@@ -1,0 +1,259 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Core employee record",
+      "type": "object",
+      "properties": {
+        "empId": { "type": "string", "description": "Unique Employee ID (EMP-YYYY-NNN)" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "deptId": { "type": "string", "description": "Reference to Department ID" },
+        "designationId": { "type": "string", "description": "Reference to Designation ID" },
+        "managerId": { "type": "string", "description": "Reference to Manager Employee ID" },
+        "status": { "type": "string", "enum": ["pending", "active", "inactive", "terminated"] },
+        "joinDate": { "type": "string", "format": "date" },
+        "probationEndDate": { "type": "string", "format": "date" },
+        "employmentType": { "type": "string", "enum": ["full_time", "part_time", "intern", "contract"] },
+        "profilePhotoUrl": { "type": "string" },
+        "role": { "type": "string", "description": "Primary role name" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "deletedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["empId", "firstName", "lastName", "email", "status", "role"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Company departments",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "headId": { "type": "string", "description": "Employee ID of Dept Head" }
+      },
+      "required": ["name"]
+    },
+    "Designation": {
+      "title": "Designation",
+      "description": "Job titles and levels",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "level": { "type": "integer" },
+        "deptId": { "type": "string" }
+      },
+      "required": ["title", "deptId"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "Immutable trail of all CRUD actions",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "module": { "type": "string" },
+        "action": { "type": "string" },
+        "recordId": { "type": "string" },
+        "beforeData": { "type": "object" },
+        "afterData": { "type": "object" },
+        "ipAddress": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["employeeId", "module", "action", "createdAt"]
+    },
+    "OnboardingTask": {
+      "title": "Onboarding Task",
+      "description": "A single task in the onboarding checklist",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "ownerRole": { "type": "string", "enum": ["employee", "hr", "it", "finance", "manager"] },
+        "isMandatory": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "done"] },
+        "fileUrl": { "type": "string" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "ownerRole", "isMandatory", "status"]
+    },
+    "EmployeeDocument": {
+      "title": "Employee Document",
+      "description": "Uploaded documents for verification",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["offer_letter", "id_proof", "pan", "aadhaar", "passport", "degree"] },
+        "fileUrl": { "type": "string" },
+        "fileName": { "type": "string" },
+        "uploadedAt": { "type": "string", "format": "date-time" },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "verifiedBy": { "type": "string" }
+      },
+      "required": ["type", "fileUrl", "uploadedAt"]
+    },
+    "LeaveApplication": {
+      "title": "Leave Application",
+      "description": "Employee leave request",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "leaveType": { "type": "string", "enum": ["CL", "SL", "EL", "LOP"] },
+        "fromDate": { "type": "string", "format": "date" },
+        "toDate": { "type": "string", "format": "date" },
+        "days": { "type": "number" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "cancelled"] },
+        "appliedAt": { "type": "string", "format": "date-time" },
+        "approvedBy": { "type": "string" }
+      },
+      "required": ["employeeId", "leaveType", "fromDate", "toDate", "days", "status"]
+    },
+    "AttendanceLog": {
+      "title": "Attendance Log",
+      "description": "Daily punch-in/out record",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "punchIn": { "type": "string", "format": "date-time" },
+        "punchOut": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["P", "A", "L", "HD", "LT"] },
+        "workHours": { "type": "number" }
+      },
+      "required": ["employeeId", "date", "status"]
+    },
+    "PayrollRun": {
+      "title": "Payroll Run",
+      "description": "Monthly payroll processing record",
+      "type": "object",
+      "properties": {
+        "month": { "type": "integer" },
+        "year": { "type": "integer" },
+        "status": { "type": "string", "enum": ["draft", "approved", "locked"] },
+        "totalGross": { "type": "number" },
+        "totalNet": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["month", "year", "status"]
+    },
+    "Payslip": {
+      "title": "Payslip",
+      "description": "Individual employee payslip",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "runId": { "type": "string" },
+        "gross": { "type": "number" },
+        "deductions": { "type": "number" },
+        "net": { "type": "number" },
+        "lopDays": { "type": "number" },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["employeeId", "runId", "gross", "net"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Internal or client project",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "completed", "on_hold"] }
+      },
+      "required": ["name", "code", "status"]
+    },
+    "Timesheet": {
+      "title": "Timesheet",
+      "description": "Weekly work log",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "weekStartDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["draft", "submitted", "approved", "rejected"] },
+        "totalHours": { "type": "number" },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "projectId": { "type": "string" },
+              "date": { "type": "string", "format": "date" },
+              "hours": { "type": "number" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["employeeId", "weekStartDate", "status"]
+    },
+    "InternalOrder": {
+      "title": "Internal Order",
+      "description": "Request for assets or supplies",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "itemType": { "type": "string", "enum": ["IT", "Stationery", "Furniture", "Other"] },
+        "itemName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "dispatched", "received"] },
+        "requestedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["employeeId", "itemType", "itemName", "quantity", "status"]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Employee profiles"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Company projects"
+    },
+    "/internal_orders/{orderId}": {
+      "schema": "InternalOrder",
+      "description": "Internal asset requests"
+    },
+    "/employees/{employeeId}/timesheets/{timesheetId}": {
+      "schema": "Timesheet",
+      "description": "Employee weekly timesheets"
+    },
+    "/payroll_runs/{runId}": {
+      "schema": "PayrollRun",
+      "description": "Monthly payroll runs"
+    },
+    "/employees/{employeeId}/payslips/{payslipId}": {
+      "schema": "Payslip",
+      "description": "Employee payslips"
+    },
+    "/employees/{employeeId}/leave_applications/{appId}": {
+      "schema": "LeaveApplication",
+      "description": "Employee leave requests"
+    },
+    "/employees/{employeeId}/attendance_logs/{logId}": {
+      "schema": "AttendanceLog",
+      "description": "Employee daily attendance"
+    },
+    "/employees/{employeeId}/onboarding_tasks/{taskId}": {
+      "schema": "OnboardingTask",
+      "description": "Checklist tasks for a specific employee"
+    },
+    "/employees/{employeeId}/documents/{docId}": {
+      "schema": "EmployeeDocument",
+      "description": "Employee documents"
+    },
+    "/departments/{deptId}": {
+      "schema": "Department",
+      "description": "Department list"
+    },
+    "/designations/{desigId}": {
+      "schema": "Designation",
+      "description": "Designation list"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Immutable audit trail"
+    }
+  }
+}

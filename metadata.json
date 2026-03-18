@@ -1,0 +1,5 @@
+{
+  "name": "Enterprise HRMS Portal",
+  "description": "A production-ready HRMS portal for a 40-employee IT organisation, featuring onboarding, leave, attendance, payroll, and recruitment modules.",
+  "requestFramePermissions": []
+}

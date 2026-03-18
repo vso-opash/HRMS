@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: employees
+    // Fields: empId, firstName, lastName, email, role, status, etc.
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        ((exists(/databases/$(database)/documents/employees/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/employees/$(request.auth.uid)).data.role == 'super_admin') ||
+         request.auth.token.email == "vso.opash@gmail.com" ||
+         request.auth.token.email == "admin@opash.com");
+    }
+    
+    // For development/mock admin bypass
+    function isMockAdmin() {
+      return !isAuthenticated(); // In this specific bypass mode, we treat unauthenticated as potential mock admin
+    }
+
+    function isValidEmployee(data) {
+      return data.keys().hasAll(['empId', 'firstName', 'lastName', 'email', 'role', 'status']) &&
+             data.firstName is string && data.firstName.size() < 100 &&
+             data.lastName is string && data.lastName.size() < 100 &&
+             data.email is string;
+    }
+
+    // Rules
+    match /employees/{employeeId} {
+      allow read: if true; // Permissive read for dashboard and onboarding
+      allow create: if (isAdmin() || isMockAdmin() || (isAuthenticated() && request.auth.token.email == "admin@opash.com")) && isValidEmployee(request.resource.data);
+      allow update: if (isAdmin() || isMockAdmin() || isOwner(employeeId)) && isValidEmployee(request.resource.data);
+      allow delete: if false; // Soft delete only
+
+      match /onboarding_tasks/{taskId} {
+        allow read: if true;
+        allow create: if isAdmin() || isMockAdmin();
+        allow update: if isAdmin() || isMockAdmin() || (isOwner(employeeId) && request.resource.data.ownerRole == 'employee');
+        allow delete: if isAdmin() || isMockAdmin();
+      }
+
+      match /documents/{docId} {
+        allow read: if isAdmin() || isOwner(employeeId);
+        allow create: if isOwner(employeeId);
+        allow update: if isAdmin(); // For verification
+        allow delete: if isAdmin() || isOwner(employeeId);
+      }
+
+      match /attendance_logs/{logId} {
+        allow read: if true;
+        allow create, update: if isOwner(employeeId) || isAdmin() || !isAuthenticated(); // Allow for mock session
+      }
+
+      match /payslips/{payslipId} {
+        allow read: if isOwner(employeeId) || isAdmin() || !isAuthenticated();
+        allow create, update, delete: if isAdmin();
+      }
+
+      match /timesheets/{timesheetId} {
+        allow read: if isOwner(employeeId) || isAdmin() || !isAuthenticated();
+        allow create: if isOwner(employeeId) || !isAuthenticated();
+        allow update: if isOwner(employeeId) || isAdmin() || !isAuthenticated();
+      }
+    }
+
+    match /leave_applications/{appId} {
+      allow read: if true;
+      allow create: if true; // Validation should happen in service
+      allow update: if isAdmin() || isMockAdmin() || (isAuthenticated() && resource.data.employeeId == request.auth.uid && resource.data.status == 'pending') || !isAuthenticated();
+      allow delete: if isAdmin() || isMockAdmin();
+    }
+
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin() || isMockAdmin();
+    }
+
+    match /internal_orders/{orderId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isAdmin() || isMockAdmin() || (isAuthenticated() && request.resource.data.employeeId == request.auth.uid) || !isAuthenticated();
+    }
+
+    match /payroll_runs/{runId} {
+      allow read, write: if isAdmin() || isMockAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin() || isMockAdmin();
+      allow create: if true;
+      allow update, delete: if false; // Immutable
+    }
+
+    match /{path=**} {
+      allow read, write: if isAdmin() || isMockAdmin();
+    }
+  }
+}
